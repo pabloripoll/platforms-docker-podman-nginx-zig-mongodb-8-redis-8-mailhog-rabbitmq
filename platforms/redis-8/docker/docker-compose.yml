@@ -13,11 +13,11 @@ services:
       REDIS_USER: ${REDIS_USER}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
-      - ${COMPOSE_PROJECT_BIND}:/data
+      - ${COMPOSE_PROJECT_DATA}:/data
     deploy:
       resources:
         limits:
           cpus: ${COMPOSE_PROJECT_CPUS}
-          memory: ${COMPOSE_PROJECT_MEM}
+          memory: ${COMPOSE_PROJECT_MEMO}
     tty: true
     restart: unless-stopped

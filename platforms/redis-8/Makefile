@@ -27,11 +27,12 @@ DOCKER_CNET=$(PROJECT_CNET)
 DOCKER_HOST=$(PROJECT_HOST)
 DOCKER_IMGK=$(REDIS_IMGK)
 DOCKER_CAAS=$(REDIS_CAAS)
+DOCKER_DATA=$(REDIS_DATA)
+DOCKER_LOGS=$(REDIS_LOGS)
 DOCKER_PORT=$(REDIS_PORT)
-DOCKER_BIND=$(REDIS_BIND)
-DOCKER_CPUS=$(REDIS_CAAS_CPUS)
-DOCKER_MEM=$(REDIS_CAAS_MEM)
-DOCKER_SWAP=$(REDIS_CAAS_SWAP)
+DOCKER_CPUS=$(REDIS_CPUS)
+DOCKER_MEMO=$(REDIS_MEMO)
+DOCKER_SWAP=$(REDIS_SWAP)
 
 ROOT_DIR=$(patsubst %/,%,$(dir $(realpath $(firstword $(MAKEFILE_LIST)))))
 DIR_BASENAME=$(shell basename $(ROOT_DIR))
@@ -55,12 +56,18 @@ help: ## shows this Makefile help message
 # -------------------------------------------------------------------------------------------------
 .PHONY: port-check
 
-port-check: ## shows this project port availability on local machine
-	echo "Checking configuration for "${C_YEL}"$(DOCKER_PLTF)"${C_END}" container:";
+ports-check: ## shows this project port availability on local machine
+	echo "Checking configuration for "${C_YEL}"$(DOCKER_PLTF)"${C_END}" service:";
 	if [ -z "$($(DOCKER) lsof -i :$(DOCKER_PORT))" ]; then \
 		echo ${C_BLU}"$(DOCKER_PLTF)"${C_END}" > localhost:"${C_GRN}"$(DOCKER_PORT) is free to use."${C_END}; \
     else \
 		echo ${C_BLU}"$(DOCKER_PLTF)"${C_END}" > localhost:"${C_RED}"$(DOCKER_PORT) is busy. Update ./.env file."${C_END}; \
+	fi
+	echo "Checking configuration for "${C_YEL}"$(DOCKER_PLTF) CLIENT"${C_END}" service:";
+	if [ -z "$($(DOCKER) lsof -i :$(DOCKER_CLIENT_PORT))" ]; then \
+		echo ${C_BLU}"$(DOCKER_PLTF) CLIENT"${C_END}" > localhost:"${C_GRN}"$(DOCKER_CLIENT_PORT) is free to use."${C_END}; \
+    else \
+		echo ${C_BLU}"$(DOCKER_PLTF) CLIENT"${C_END}" > localhost:"${C_RED}"$(DOCKER_CLIENT_PORT) is busy. Update ./.env file."${C_END}; \
 	fi
 
 # -------------------------------------------------------------------------------------------------
@@ -80,32 +87,33 @@ env-set: ## sets docker .env file
 ifeq ($(DETECTED_OS), Windows)
 	echo "Recipe do not support for Windows NT at this moment - You have to manually create .env file from ./docker/.env.example";
 else
-	echo "COMPOSE_PROJECT_LEAD=\"$(DOCKER_LEAD)\"\r\n\
-	COMPOSE_PROJECT_CNET=\"$(DOCKER_CNET)\"\r\n\
-	COMPOSE_PROJECT_IMGK=\"$(DOCKER_IMGK)\"\r\n\
-	COMPOSE_PROJECT_NAME=\"$(DOCKER_CAAS)\"\r\n\
-	COMPOSE_PROJECT_HOST=\"$(DOCKER_HOST)\"\r\n\
-	COMPOSE_PROJECT_PORT=$(DOCKER_PORT)\r\n\
-	COMPOSE_PROJECT_BIND=\"$(DOCKER_BIND)\"\r\n\
-	COMPOSE_PROJECT_CPUS=\"$(DOCKER_CPUS)\"\r\n\
-	COMPOSE_PROJECT_MEM=\"$(DOCKER_MEM)\"\r\n\
-	COMPOSE_PROJECT_SWAP=\"$(DOCKER_SWAP)\"\r\n\
-	REDIS_ROOT_USER=\"$(REDIS_ROOT_USER)\"\r\n\
-	REDIS_ROOT_PASSWORD=\"$(REDIS_ROOT_PASS)\"\r\n\
-	REDIS_USER=\"$(REDIS_USER)\"\r\n\
-	REDIS_PASSWORD=\"$(REDIS_PASS)\"" > ./docker/.env; \
-	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" MEMORY DB "${C_YEL}$(DOCKER_PLTF)${C_END}" - "${C_YEL}"docker-compose.yml"${C_END}" .env file "${C_GRN}"has been set."${C_END};
-	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" MEMORY DB "${C_YEL}$(DOCKER_PLTF)${C_END}" - Container: "${C_GRN}$(DOCKER_CONTAINER)${C_END}
-	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" MEMORY DB "${C_YEL}$(DOCKER_PLTF)${C_END}" - Max. CPUs: "${C_GRN}$(DOCKER_CPUS)${C_END}
-	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" MEMORY DB "${C_YEL}$(DOCKER_PLTF)${C_END}" - Max. memory: "${C_GRN}$(DOCKER_MEM)${C_END}" - Swap: "${C_GRN}$(DOCKER_SWAP)${C_END}
-	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" MEMORY DB "${C_YEL}$(DOCKER_PLTF)${C_END}" - Localhost: http://127.0.0.1:"${C_GRN}"$(DOCKER_PORT)"${C_END};
-	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" MEMORY DB "${C_YEL}$(DOCKER_PLTF)${C_END}" - Hostname: http://$(word 1,$(shell hostname -I)):"${C_GRN}"$(DOCKER_PORT)"${C_END};
+	@echo "COMPOSE_PROJECT_LEAD=$(DOCKER_LEAD)" > ./docker/.env
+	@echo "COMPOSE_PROJECT_CNET=$(DOCKER_CNET)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_IMGK=$(DOCKER_IMGK)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_NAME=$(DOCKER_CAAS)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_HOST=$(DOCKER_HOST)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_DATA=\"$(DOCKER_DATA)\"" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_LOGS=\"$(DOCKER_LOGS)\"" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_CPUS=$(DOCKER_CPUS)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_MEMO=$(DOCKER_MEMO)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_SWAP=$(DOCKER_SWAP)" >> ./docker/.env
+	@echo "COMPOSE_PROJECT_PORT=$(DOCKER_PORT)" >> ./docker/.env
+	@echo "REDIS_ROOT_USER=$(REDIS_ROOT_USER)" >> ./docker/.env
+	@echo "REDIS_ROOT_PASSWORD=\"$(REDIS_ROOT_PASS)\"" >> ./docker/.env
+	@echo "REDIS_USER=$(REDIS_USER)" >> ./docker/.env
+	@echo "REDIS_PASSWORD=\"$(REDIS_PASS)\"" >> ./docker/.env
+	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" KEY-VALUE STORE "${C_YEL}$(DOCKER_PLTF)${C_END}" - "${C_YEL}"docker-compose.yml"${C_END}" .env file "${C_GRN}"has been set."${C_END};
+	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" KEY-VALUE STORE "${C_YEL}$(DOCKER_PLTF)${C_END}" - Container: "${C_GRN}$(DOCKER_CONTAINER)${C_END}
+	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" KEY-VALUE STORE "${C_YEL}$(DOCKER_PLTF)${C_END}" - Max. CPUs: "${C_GRN}$(DOCKER_CPUS)${C_END}
+	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" KEY-VALUE STORE "${C_YEL}$(DOCKER_PLTF)${C_END}" - Max. memory: "${C_GRN}$(DOCKER_MEMO)${C_END}" - Swap: "${C_GRN}$(DOCKER_SWAP)${C_END}
+	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" KEY-VALUE STORE "${C_YEL}$(DOCKER_PLTF)${C_END}" - Localhost: http://127.0.0.1:"${C_GRN}"$(DOCKER_PORT)"${C_END};
+	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" KEY-VALUE STORE "${C_YEL}$(DOCKER_PLTF)${C_END}" - Hostname: http://$(word 1,$(shell hostname -I)):"${C_GRN}"$(DOCKER_PORT)"${C_END};
 endif
 
 # -------------------------------------------------------------------------------------------------
 #  Container
 # -------------------------------------------------------------------------------------------------
-.PHONY: info ssh build up dev start stop restart clear destroy
+.PHONY: info ssh up build network start stop restart clear destroy dev
 
 info: ## shows container information
 	echo ${C_BLU}"$(PROJECT_NAME)"${C_END}" - REDIS: "${C_GRN}"$(DOCKER_PLTF)"${C_END};
@@ -113,7 +121,7 @@ info: ## shows container information
 	echo ${C_YEL}"Name.........: "${C_END}$(DOCKER_CONTAINER);
 	echo ${C_YEL}"Image........: "${C_END}"$(DOCKER_CONTAINER):$(DOCKER_IMGK)";
 	echo ${C_YEL}"CPUs.........: "${C_END}"$(DOCKER_CPUS)";
-	echo ${C_YEL}"Memory.......: "${C_END}"$(DOCKER_MEM)";
+	echo ${C_YEL}"Memory.......: "${C_END}"$(DOCKER_MEMO)";
 	echo ${C_YEL}"Host.........: "${C_END}"$(DOCKER_HOST):$(DOCKER_PORT)";
 	echo ${C_YEL}"Hostname.....: "${C_END}"$(word 1,$(shell hostname -I)):"$(DOCKER_PORT);
 	printf ${C_YEL}"Docker.Host..: "${C_END};$(DOCKER) inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(DOCKER_CONTAINER);
